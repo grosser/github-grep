@@ -6,5 +6,10 @@ makes github search grep and pipeable
 
 ```
 bundle
-bundle exec ruby github-grep.rb 'user:my-rog something-bad' | grep 'narrow-it-down' | grep -v 'something good'
+
+# search code:
+bundle exec ruby github-grep.rb 'user:grosser unicorn' | grep 'narrow-it-down' | grep -v 'something good'
+
+# search issues and PR comments:
+bundle exec ruby github-grep.rb 'repo:kubernetes/kubernetes network error' --issues | grep 'narrow-it-down' | grep -v 'something good'
 ```
