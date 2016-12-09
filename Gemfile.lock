@@ -1,13 +1,23 @@
+PATH
+  remote: .
+  specs:
+    github-grep (0.0.0)
+      json
+
 GEM
   remote: https://rubygems.org/
   specs:
-    json (1.8.1)
+    bump (0.5.3)
+    json (2.0.2)
+    rake (11.3.0)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
-  json
+  bump
+  github-grep!
+  rake
 
 BUNDLED WITH
-   1.10.6
+   1.13.5
