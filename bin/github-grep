@@ -1,5 +1,7 @@
+#!/usr/bin/env ruby
 require 'cgi'
 require 'json'
+require 'shellwords'
 
 def usage
   puts <<-TEXT.gsub(/^    /, "")
@@ -58,9 +60,9 @@ def page(q, type, page, per_page)
   usage if github_token.empty?
 
   url = "https://api.github.com/search/#{type}?per_page=#{per_page}&page=#{page}&q=#{CGI.escape(q)}"
-  command = "curl --silent --fail -H 'Authorization: token #{github_token}' -H 'Accept: application/vnd.github.v3.text-match+json' '#{url}'"
-  response = `#{command}`
-  raise "ERROR Request failed, reply was: #{response.inspect}" unless $?.success?
+  command = ["curl", "-v", "--fail", "-H", "Authorization: token #{github_token}", "-H", "Accept: application/vnd.github.v3.text-match+json", url]
+  response = `#{command.shelljoin}`
+  raise "ERROR Request failed\n#{url}\nreply was: #{response.inspect}" unless $?.success?
 
   JSON.load(response)
 end

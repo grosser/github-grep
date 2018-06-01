@@ -8,8 +8,8 @@ makes github search grep and pipeable
 bundle
 
 # search code:
-bundle exec ruby github-grep.rb 'user:grosser unicorn' | grep 'narrow-it-down' | grep -v 'something good'
+bin/github-grep 'user:grosser unicorn' | grep 'narrow-it-down' | grep -v 'something good'
 
 # search issues and PR comments:
-bundle exec ruby github-grep.rb 'repo:kubernetes/kubernetes network error' --issues | grep 'narrow-it-down' | grep -v 'something good'
+bin/github-grep 'repo:kubernetes/kubernetes network error' --issues | grep 'narrow-it-down' | grep -v 'something good'
 ```
