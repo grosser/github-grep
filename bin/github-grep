@@ -59,8 +59,10 @@ def page(q, type, page, per_page)
   github_token = `git config github.token`.strip
   usage if github_token.empty?
 
+  # remove --fail and add -v to see response headers
+  # NOTE: github returns a 403 with a Retry-After: 60 on page 3+ ... talking with support atm but might have to handle it
   url = "https://api.github.com/search/#{type}?per_page=#{per_page}&page=#{page}&q=#{CGI.escape(q)}"
-  command = ["curl", "-v", "--fail", "-H", "Authorization: token #{github_token}", "-H", "Accept: application/vnd.github.v3.text-match+json", url]
+  command = ["curl", "--fail", "-H", "Authorization: token #{github_token}", "-H", "Accept: application/vnd.github.v3.text-match+json", url]
   response = `#{command.shelljoin}`
   raise "ERROR Request failed\n#{url}\nreply was: #{response.inspect}" unless $?.success?
 
