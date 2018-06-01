@@ -2,6 +2,7 @@
 require 'cgi'
 require 'json'
 require 'shellwords'
+require 'open3'
 
 def usage
   puts <<-TEXT.gsub(/^    /, "")
@@ -62,11 +63,18 @@ def page(q, type, page, per_page)
   # remove --fail and add -v to see response headers
   # NOTE: github returns a 403 with a Retry-After: 60 on page 3+ ... talking with support atm but might have to handle it
   url = "https://api.github.com/search/#{type}?per_page=#{per_page}&page=#{page}&q=#{CGI.escape(q)}"
-  command = ["curl", "--fail", "-H", "Authorization: token #{github_token}", "-H", "Accept: application/vnd.github.v3.text-match+json", url]
-  response = `#{command.shelljoin}`
-  raise "ERROR Request failed\n#{url}\nreply was: #{response.inspect}" unless $?.success?
+  command = ["curl", "-v", "-H", "Authorization: token #{github_token}", "-H", "Accept: application/vnd.github.v3.text-match+json", url]
 
-  JSON.load(response)
+  out, err, _ = Open3.capture3(*command)
+  if retry_after = err[/Retry-After: (\d+)/, 1] # 403 Abuse rate limit
+    warn "Sleeping #{retry_after} to avoid abuse rate-limit"
+    sleep Integer(retry_after)
+    out, err, _ = Open3.capture3(*command)
+  end
+
+  raise "ERROR Request failed\n#{url}\n#{err}\n#{out}" unless err.include?("< Status: 200 OK")
+
+  JSON.load(out)
 end
 
 type = (ARGV.delete('--issues') ? :issues : :code)
