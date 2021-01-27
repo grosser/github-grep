@@ -57,7 +57,7 @@ def search(q, type)
 end
 
 def page(q, type, page, per_page)
-  github_token = `git config github.token`.strip
+  github_token = ENV['GITHUB_TOKEN'] || `git config github.token`.strip # TODO: update docs
   usage if github_token.empty?
 
   # remove --fail and add -v to see response headers
@@ -72,7 +72,7 @@ def page(q, type, page, per_page)
     out, err, _ = Open3.capture3(*command)
   end
 
-  raise "ERROR Request failed\n#{url}\n#{err}\n#{out}" unless err.include?("< Status: 200 OK")
+  raise "ERROR Request failed\n#{url}\n#{err}\n#{out}" unless err.downcase.include?("< status: 200 ok")
 
   JSON.load(out)
 end

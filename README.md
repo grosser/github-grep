@@ -7,6 +7,9 @@ makes github search grep and pipeable
 ```
 bundle
 
+export GITHUB_TOKEN=xxx
+# or: git config github.token xxx
+
 # search code:
 bin/github-grep 'user:grosser unicorn' | grep 'narrow-it-down' | grep -v 'something good'
 
