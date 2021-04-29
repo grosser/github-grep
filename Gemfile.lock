@@ -9,7 +9,7 @@ GEM
   specs:
     bump (0.5.3)
     json (2.0.2)
-    rake (11.3.0)
+    rake (12.3.3)
 
 PLATFORMS
   ruby
