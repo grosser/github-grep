@@ -26,10 +26,4 @@ q = ARGV.shift
 usage if ARGV.size != 0
 
 grep = GithubGrep.new(github_token)
-grep.search(q, type) do |items|
-  if type == :issues
-    puts grep.issue_items_to_lines(items)
-  else
-    puts grep.code_items_to_lines(items)
-  end
-end
+grep.render_search(q, type) { |slice| puts slice }

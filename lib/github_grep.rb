@@ -10,11 +10,23 @@ class GithubGrep
     @token = token
   end
 
+  def render_search(q, type)
+    search(q, type) do |items|
+      if type == :issues
+        yield issue_items_to_lines(items)
+      else
+        yield code_items_to_lines(items)
+      end
+    end
+  end
+
   def search(q, type, &block)
     headers = ["-H", "Accept: application/vnd.github.v3.text-match+json"]
     url = "https://api.github.com/search/#{type}?q=#{CGI.escape(q)}"
     all_pages(url, per_page: 100, argv: headers, &block)
   end
+
+  private
 
   def code_items_to_lines(items)
     items.flat_map do |item|
@@ -29,8 +41,6 @@ class GithubGrep
       lines(item).map { |l| "##{number}: #{l}" }
     end
   end
-
-  private
 
   def lines(item)
     item.fetch("text_matches").flat_map { |match| match.fetch('fragment').split("\n") }
@@ -61,7 +71,12 @@ class GithubGrep
     command = ["curl", "-sSfv", "-H", "Authorization: token #{@token}", *argv, url]
 
     out, err, status = Open3.capture3(*command)
-    if retry_after = err[/Retry-After: (\d+)/, 1] # 403 Abuse rate limit
+
+    # 403 Abuse rate limit often has no Retry-After
+    retry_after = err[/Retry-After: (\d+)/, 1]
+    abuse_limit = err.include?("returned error: 403")
+    if retry_after || abuse_limit
+      retry_after ||= "20"
       warn "Sleeping #{retry_after} to avoid abuse rate-limit"
       sleep Integer(retry_after)
       out, err, status = Open3.capture3(*command)
