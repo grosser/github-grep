@@ -1,11 +1,9 @@
 #!/usr/bin/env ruby
-require 'cgi'
-require 'json'
-require 'shellwords'
-require 'open3'
+$LOAD_PATH << File.expand_path("../../lib", __FILE__)
+require "github_grep"
 
 def usage
-  puts <<-TEXT.gsub(/^    /, "")
+  puts <<~TEXT
     Setup
     -----
     # create a new token at https://github.com/settings/tokens/new with repo access
@@ -18,74 +16,20 @@ def usage
   exit 1
 end
 
-def code_items_to_lines(items)
-  items.flat_map do |item|
-    file = item.fetch('repository').fetch('name') + ":" + item.fetch('path')
-    lines(item).map { |l| "#{file}: #{l}" }
-  end
-end
 
-def issue_items_to_lines(items)
-  items.flat_map do |item|
-    number = item.fetch("number")
-    lines(item).map { |l| "##{number}: #{l}" }
-  end
-end
-
-def lines(item)
-  item.fetch("text_matches").flat_map { |match| match.fetch('fragment').split("\n") }
-end
-
-def search(q, type)
-  per_page = 100
-  page = 1
-
-  loop do
-    response = page(q, type, page, per_page)
-    if page == 1
-      $stderr.puts "Found #{response.fetch("total_count")}"
-    else
-      $stderr.puts "Page #{page}"
-    end
-
-    items = response.fetch('items')
-    yield items
-
-    break if items.size < per_page
-    page += 1
-  end
-end
-
-def page(q, type, page, per_page)
-  github_token = ENV['GITHUB_TOKEN'] || `git config github.token`.strip # TODO: update docs
-  usage if github_token.empty?
-
-  # remove --fail and add -v to see response headers
-  # NOTE: github returns a 403 with a Retry-After: 60 on page 3+ ... talking with support atm but might have to handle it
-  url = "https://api.github.com/search/#{type}?per_page=#{per_page}&page=#{page}&q=#{CGI.escape(q)}"
-  command = ["curl", "-v", "-f", "-H", "Authorization: token #{github_token}", "-H", "Accept: application/vnd.github.v3.text-match+json", url]
-
-  out, err, status = Open3.capture3(*command)
-  if retry_after = err[/Retry-After: (\d+)/, 1] # 403 Abuse rate limit
-    warn "Sleeping #{retry_after} to avoid abuse rate-limit"
-    sleep Integer(retry_after)
-    out, err, status = Open3.capture3(*command)
-  end
-
-  raise "ERROR Request failed\n#{url}\n#{err}\n#{out}" unless status.success?
-
-  JSON.load(out)
-end
+github_token = ENV['GITHUB_TOKEN'] || `git config github.token`.strip # TODO: update docs
+usage if github_token.empty?
 
 type = (ARGV.delete('--issues') ? :issues : :code)
 
 q = ARGV.shift
 usage if ARGV.size != 0
 
-search(q, type) do |items|
+grep = GithubGrep.new(github_token)
+grep.search(q, type) do |items|
   if type == :issues
-    puts issue_items_to_lines(items)
+    puts grep.issue_items_to_lines(items)
   else
-    puts code_items_to_lines(items)
+    puts grep.code_items_to_lines(items)
   end
 end
