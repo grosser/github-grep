@@ -4,7 +4,7 @@ require 'shellwords'
 require 'open3'
 
 class GithubGrep
-  VERSION = "0.0.0"
+  VERSION = "0.1.0"
 
   def initialize(token)
     @token = token
