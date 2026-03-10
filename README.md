@@ -1,6 +1,6 @@
 makes github search grep and pipeable
 
-First create a [application token](https://github.com/settings/applications) with read access + enable SSO if available.
+First create a [token](https://github.com/settings/tokens) with read access + enable SSO if available.
 
 ```
 gem install github-grep
@@ -16,3 +16,5 @@ github-grep 'repo:kubernetes/kubernetes network error' --issues | grep 'narrow-i
 ```
 
 NOTE: there are random 403 errors on the last page of a search (usually empty anyway), contacted github support about that :/
+
+Local usage: `./bin/github-grep` from inside the cloned repo
